@@ -22,9 +22,11 @@
 /frontend/ @Tribalchief39
 
 # Deploy, file export handlers (live inside orchestrator but Priyanka's commits), and docs - Priyanka (techieydv)
-/deploy/ @techieydv
-/orchestrator/internal/export/ @techieydv
-/scripts/ @techieydv
+# COVER: Deepesh added as co-owner while Priyanka unavailable — Day 1 critical path (Six_Day_Build_Plan.md:45)
+# Revert to solo @techieydv when she returns
+/deploy/ @techieydv @yadav-deepesh
+/orchestrator/internal/export/ @techieydv @yadav-deepesh
+/scripts/ @techieydv @yadav-deepesh
 
 # Docs - everyone, but Deepesh merges
 /docs/ @yadav-deepesh

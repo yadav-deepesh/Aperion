@@ -7,8 +7,9 @@
 /config/ @yadav-deepesh
 /.github/workflows/ @yadav-deepesh
 
-# Rust engine - Abhishek
-/engine/ @Byteme-dot
+# Rust engine - Abhishek (Deepesh co-owner so author PRs can be approved)
+# Fix for PR #2 deadlock: author cannot approve own Code Owner PR
+/engine/ @Byteme-dot @yadav-deepesh
 
 # Skyfield orbit service - Sarthak
 /services/skyfield_svc/ @SarthakGupta24csu185

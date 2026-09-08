@@ -7,8 +7,7 @@
 /config/ @yadav-deepesh
 /.github/workflows/ @yadav-deepesh
 
-# Rust engine - Abhishek (Deepesh co-owner so author PRs can be approved)
-# Fix for PR #2 deadlock: author cannot approve own Code Owner PR
+# Rust engine - Abhishek
 /engine/ @Byteme-dot @yadav-deepesh
 
 # Skyfield orbit service - Sarthak
@@ -23,8 +22,6 @@
 /frontend/ @Tribalchief39
 
 # Deploy, file export handlers (live inside orchestrator but Priyanka's commits), and docs - Priyanka (techieydv)
-# COVER: Deepesh added as co-owner while Priyanka unavailable — Day 1 critical path (Six_Day_Build_Plan.md:45)
-# Revert to solo @techieydv when she returns
 /deploy/ @techieydv @yadav-deepesh
 /orchestrator/internal/export/ @techieydv @yadav-deepesh
 /scripts/ @techieydv @yadav-deepesh

@@ -1,3 +1,6 @@
+// Source: ITU-R P.525-4, free-space attenuation.
+// 92.45 is the constant for distance in km and frequency in GHz.
+
 pub fn fspl_db(distance_km: f64, frequency_ghz: f64) -> f64 {
     92.45 + 20.0 * distance_km.log10() + 20.0 * frequency_ghz.log10()
 }

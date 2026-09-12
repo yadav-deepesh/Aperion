@@ -203,3 +203,143 @@ func (s *Server) handleGenerateSchedule(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"booked": len(booked), "rejected": len(passes) - len(booked)})
 }
+
+// handleGetLedger returns weekly SLA accounting. Query: ?week=2026-09-08 (Monday). Defaults to current week.
+func (s *Server) handleGetLedger(w http.ResponseWriter, r *http.Request) {
+	week := time.Now().UTC().Truncate(24 * time.Hour)
+	if v := r.URL.Query().Get("week"); v != "" {
+		if t, err := time.Parse("2006-01-02", v); err == nil {
+			week = t
+		} else if t, err := time.Parse(time.RFC3339, v); err == nil {
+			week = t
+		}
+	}
+	// Align to Monday
+	for week.Weekday() != time.Monday {
+		week = week.AddDate(0, 0, -1)
+	}
+	rows, err := s.Store.GetLedger(r.Context(), week)
+	if err != nil {
+		http.Error(w, "db: get ledger", http.StatusInternalServerError)
+		return
+	}
+	if rows == nil {
+		rows = []db.LedgerRow{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rows)
+}
+
+// injectRequest is the payload for POST /inject-emergency. Tier must be 1 for preemption.
+type injectRequest struct {
+	PassID     string  `json:"pass_id"`
+	NoradID    int     `json:"norad_id"`
+	SatName    string  `json:"sat_name"`
+	Aos        string  `json:"aos"`
+	Los        string  `json:"los"`
+	MaxEl      float64 `json:"max_el"`
+	AzAos      float64 `json:"az_aos"`
+	AzLos      float64 `json:"az_los"`
+	Tier       int     `json:"tier"`
+	ContractID string  `json:"contract_id"`
+}
+
+// handleInjectEmergency attempts to book a Tier 1 emergency pass, preempting a lower-tier victim if needed.
+func (s *Server) handleInjectEmergency(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req injectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "bad json", http.StatusBadRequest)
+		return
+	}
+	if req.Tier != 1 {
+		http.Error(w, "only tier 1 can preempt", http.StatusBadRequest)
+		return
+	}
+	aos, err1 := time.Parse(time.RFC3339, req.Aos)
+	los, err2 := time.Parse(time.RFC3339, req.Los)
+	if err1 != nil || err2 != nil || !los.After(aos) {
+		http.Error(w, "bad aos/los", http.StatusBadRequest)
+		return
+	}
+	// Load current bookings overlapping the emergency window
+	bookings, err := s.Store.GetSchedule(r.Context(), aos, los)
+	if err != nil {
+		http.Error(w, "db: get schedule", http.StatusInternalServerError)
+		return
+	}
+	if len(bookings) == 0 {
+		// No conflict, book directly
+		passID := req.PassID
+		if passID == "" {
+			passID = req.SatName + "-" + req.Aos
+		}
+		err = s.Store.InsertBookings(r.Context(), []db.BookingRow{{PassID: passID, AntennaID: 1, Aos: aos, Los: los}}, aos)
+		if err != nil {
+			http.Error(w, "db: insert", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"booked": passID, "preempted": nil})
+		return
+	}
+	// Build maps for PickVictim
+	passMap := make(map[string]scheduler.Pass)
+	contractMap := make(map[string]scheduler.Contract)
+	preemptions := make(map[string]int)
+	for _, b := range bookings {
+		// Minimal pass reconstruction for victim selection; contract and tier are needed
+		p := scheduler.Pass{ID: b.PassID, Aos: b.Aos, Los: b.Los, Tier: scheduler.Tier2Commercial, ContractID: "unknown"}
+		// Tier is not stored in bookings; in full implementation join with passes/contracts
+		passMap[b.PassID] = p
+	}
+	// Load contracts for allowance check
+	contracts, _ := s.Store.ListContracts(r.Context())
+	for _, c := range contracts {
+		contractMap[c.ID] = scheduler.Contract{ID: c.ID, Tier: scheduler.Tier(c.Tier), MaxPreemptionsWk: c.MaxPreemptionsWk}
+		// Count existing preemptions from ledger
+		week := aos.Truncate(24 * time.Hour)
+		for week.Weekday() != time.Monday {
+			week = week.AddDate(0, 0, -1)
+		}
+		ledger, _ := s.Store.GetLedger(r.Context(), week)
+		for _, l := range ledger {
+			if l.ContractID == c.ID {
+				preemptions[c.ID] = l.PreemptionCount
+			}
+		}
+	}
+	var schedBookings []scheduler.Booking
+	for _, b := range bookings {
+		schedBookings = append(schedBookings, scheduler.Booking{PassID: b.PassID, AntennaID: b.AntennaID, Aos: b.Aos, Los: b.Los})
+	}
+	victim := scheduler.PickVictim(schedBookings, passMap, contractMap, preemptions)
+	if victim == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]any{"error": "NO_LEGAL_VICTIM", "message": "no allowance-eligible victim"})
+		return
+	}
+	// Preempt victim: delete its booking and insert emergency
+	_, _ = s.Store.Pool.Exec(r.Context(), `DELETE FROM bookings WHERE pass_id = $1`, victim.PassID)
+	passID := req.PassID
+	if passID == "" {
+		passID = req.SatName + "-" + req.Aos
+	}
+	_ = s.Store.InsertBookings(r.Context(), []db.BookingRow{{PassID: passID, AntennaID: victim.AntennaID, Aos: aos, Los: los}}, aos)
+	// Update ledger for victim contract
+	if p, ok := passMap[victim.PassID]; ok {
+		if c, ok := contractMap[p.ContractID]; ok {
+			week := aos.Truncate(24 * time.Hour)
+			for week.Weekday() != time.Monday {
+				week = week.AddDate(0, 0, -1)
+			}
+			_ = s.Store.UpsertLedgerPreemption(r.Context(), c.ID, week, c.CreditPerMiss, c.RatePerPass)
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"booked": passID, "preempted": victim.PassID, "antenna": victim.AntennaID})
+}

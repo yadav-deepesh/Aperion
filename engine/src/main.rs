@@ -5,6 +5,7 @@ mod gas;
 mod cloud;
 mod scintillation;
 mod pointing;
+mod polarization;
 
 fn main() {
     let loss = fspl::fspl_db(500.0, 26.0);
@@ -55,4 +56,7 @@ fn main() {
 
     let pointing = pointing::pointing_loss_db(0.1,1.5);
     println!("Pointing Loss: {:.6} dB", pointing);
+
+    let polarization = polarization::polarization_loss_db(5.0);
+    println!("Polarization Loss: {:?}", polarization);
 }

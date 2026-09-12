@@ -4,6 +4,7 @@ mod rain;
 mod gas;
 mod cloud;
 mod scintillation;
+mod pointing;
 
 fn main() {
     let loss = fspl::fspl_db(500.0, 26.0);
@@ -51,4 +52,7 @@ fn main() {
             1.2,   
     );
     println!("Scintillation Attenuation: {:?}", scintillation);
+
+    let pointing = pointing::pointing_loss_db(0.1,1.5);
+    println!("Pointing Loss: {:.6} dB", pointing);
 }

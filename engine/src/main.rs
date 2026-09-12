@@ -1,6 +1,7 @@
 mod fspl; 
 // Importing the fspl.rs file as a module so that we can use the functions defined in it.
 mod rain;
+mod gas;
 
 fn main() {
     let loss = fspl::fspl_db(500.0, 26.0);
@@ -17,5 +18,15 @@ fn main() {
         0.0,    
         1.2,
     );
-println!("Rain attenuation: {:?}", rain);
+    println!("Rain attenuation: {:?}", rain);
+
+    let gas = gas::gas_loss_db(
+    45.4215,
+    -75.6972,
+    12.0,
+    30.0,
+    0.1,
+    1.2,
+    );
+    println!("Gas Attenuation: {:?}", gas);
 }

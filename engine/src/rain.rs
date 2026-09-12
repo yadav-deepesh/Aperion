@@ -7,8 +7,17 @@ pub fn rain_loss_db(
     time_percent: f64, // How often we want the rain attenuation to be exceeded 
     rain_rate_r001_mmh: f64,
     polarization_deg: f64,
+    antenna_diameter_m: f64,
 ) -> Result<f64 , itu_rs::ItuError>{
+
+    // Result<> in rust is like its answering a question.
+    // If the fun runs successfully then it returns f64 value, if it fails then it returns and error of type itu_rs::ItuError.
+
     let options = itu_rs::SlantPathOptions{
+
+        // options is a variable of type SlantPathOptions
+        // SlantPathOptions is a struct provided by the itu_rs
+        
         hs_km: Some(station_height_km),
         r001_mmh: Some(rain_rate_r001_mmh),
         tau_deg: polarization_deg,
@@ -20,18 +29,23 @@ pub fn rain_loss_db(
 
         ..itu_rs::SlantPathOptions::default()
     };
-
+    // The main function provided by itu_rs is atmospheric_attenuation_slant_path
+    // It accepts the variables we have created and also a struct provided by them called SlantPathOptions
     let attenuation = itu_rs::atmospheric_attenuation_slant_path(
         latitude_deg,
         longitude_deg,
         frequency_ghz,
         elevation_deg,
         time_percent,
-        1.2, // Temp test value, antenna diameter
+        antenna_diameter_m,
         options,
     )?;
 
     Ok(attenuation.rain_db)
+    // attenuation.rain_db is basically one of the values inside the attenuation struct returned by the atmospheric_attenuation_slant_path function
+    // and we are asking it the rain_db variable's value which is the rain attenuation in dB
+
+
 }
 
 #[cfg(test)]
@@ -49,6 +63,7 @@ mod tests {
             0.1, // time percentage
             26.0, // R001 rain rate mm/h
             0.0, //polarization tilt
+            1.2,
         );
 
         let rain_loss = result.expect("rain calculation should succeed");
@@ -67,6 +82,7 @@ mod tests {
         1.0,
         26.48052,
         0.0,
+        1.2,
         );
 
         let rain_loss = result.expect("rain calculation should succeed");

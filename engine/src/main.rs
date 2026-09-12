@@ -15,6 +15,7 @@ fn main() {
         0.1, 
         26.0,
         0.0,    
+        1.2,
     );
 println!("Rain attenuation: {:?}", rain);
 }

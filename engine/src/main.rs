@@ -6,6 +6,7 @@ mod cloud;
 mod scintillation;
 mod pointing;
 mod polarization;
+mod link_budget;
 
 fn main() {
     let loss = fspl::fspl_db(500.0, 26.0);
@@ -59,4 +60,15 @@ fn main() {
 
     let polarization = polarization::polarization_loss_db(5.0);
     println!("Polarization Loss: {:?}", polarization);
+
+    let link_budget = link_budget::total_loss_db(
+    174.73,
+    1.9322262665,
+    0.2061205685,
+    0.1228485903,
+    0.3353860066,
+    0.053333,
+    0.0331154797,        
+    );
+    println!("Total Link Loss: {:.3} dB", link_budget);
 }

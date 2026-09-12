@@ -7,6 +7,7 @@ mod scintillation;
 mod pointing;
 mod polarization;
 mod link_budget;
+mod received_power;
 
 fn main() {
     let loss = fspl::fspl_db(500.0, 26.0);
@@ -61,7 +62,7 @@ fn main() {
     let polarization = polarization::polarization_loss_db(5.0);
     println!("Polarization Loss: {:?}", polarization);
 
-    let link_budget = link_budget::total_loss_db(
+    let total_loss = link_budget::total_loss_db(
     174.73,
     1.9322262665,
     0.2061205685,
@@ -70,5 +71,8 @@ fn main() {
     0.053333,
     0.0331154797,        
     );
-    println!("Total Link Loss: {:.3} dB", link_budget);
+    println!("Total Link Loss: {:.3} dB", total_loss);
+
+    let received_power = received_power::received_power_dbm(20.0,40.0,40.0,total_loss);
+    println!("Received Power: {:.3}",received_power);
 }

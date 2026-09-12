@@ -1,0 +1,3 @@
+case,python_rain_db,rust_rain_db,absolute_difference_db,tolerance_db,passed
+hyderabad_26ghz,53.21673137580691,53.21673137580691,0.0,0.001,True
+london_reference,0.4953170689782574,0.4953170689782574,0.0,0.001,True

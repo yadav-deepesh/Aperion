@@ -20,5 +20,7 @@ func NewRouter(s *Server) http.Handler {
 		http.Error(w, "not found", http.StatusNotFound)
 	})
 	mux.HandleFunc("/schedule/generate", s.handleGenerateSchedule)
+	mux.HandleFunc("/ledger", s.handleGetLedger)
+	mux.HandleFunc("/inject-emergency", s.handleInjectEmergency)
 	return mux
 }

@@ -13,6 +13,7 @@ import (
 // so the Store and future clients (engine, skyfield) are available via closure, not globals.
 type Server struct {
 	Store *db.Store
+	Hub   *Hub
 }
 
 // healthResponse is the JSON shape for GET /health. Every service exposes this.
@@ -199,6 +200,9 @@ func (s *Server) handleGenerateSchedule(w http.ResponseWriter, r *http.Request) 
 		http.Error(w, "db: persist bookings", http.StatusInternalServerError)
 		return
 	}
+	if s.Hub != nil {
+		s.Hub.Broadcast(Event{Type: "booking.created", Payload: map[string]any{"booked": len(booked)}})
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"booked": len(booked), "rejected": len(passes) - len(booked)})
@@ -282,6 +286,9 @@ func (s *Server) handleInjectEmergency(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "db: insert", http.StatusInternalServerError)
 			return
 		}
+		if s.Hub != nil {
+			s.Hub.Broadcast(Event{Type: "booking.created", Payload: map[string]any{"booked": passID}})
+		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{"booked": passID, "preempted": nil})
 		return
@@ -339,6 +346,9 @@ func (s *Server) handleInjectEmergency(w http.ResponseWriter, r *http.Request) {
 			}
 			_ = s.Store.UpsertLedgerPreemption(r.Context(), c.ID, week, c.CreditPerMiss, c.RatePerPass)
 		}
+	}
+	if s.Hub != nil {
+		s.Hub.Broadcast(Event{Type: "booking.preempted", Payload: map[string]any{"booked": passID, "preempted": victim.PassID}})
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"booked": passID, "preempted": victim.PassID, "antenna": victim.AntennaID})

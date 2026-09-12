@@ -21,14 +21,19 @@ func main() {
 	}
 
 	ctx := context.Background()
+	hub := api.NewHub()
+	go hub.Run()
+
 	store, err := db.New(ctx, dsn)
 	if err != nil {
 		log.Printf("db unavailable (%v) — starting without DB for health probe", err)
-		// Start health-only server when DB is not yet ready (docker boot ordering)
-		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		// Health + WS still available without DB
+		mux := http.NewServeMux()
+		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(`{"status":"ok","service":"orchestrator","db":"waiting"}`))
 		})
-		log.Fatal(http.ListenAndServe(":"+port, nil))
+		mux.HandleFunc("/live", (&api.Server{Hub: hub}).ServeWS)
+		log.Fatal(http.ListenAndServe(":"+port, mux))
 	}
 	defer store.Close()
 
@@ -40,7 +45,7 @@ func main() {
 	seedAntennas(ctx, store)
 	seedContracts(ctx, store)
 
-	srv := &api.Server{Store: store}
+	srv := &api.Server{Store: store, Hub: hub}
 	handler := api.NewRouter(srv)
 
 	log.Printf("orchestrator listening :%s", port)

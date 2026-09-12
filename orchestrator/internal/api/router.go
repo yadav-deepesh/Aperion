@@ -22,5 +22,6 @@ func NewRouter(s *Server) http.Handler {
 	mux.HandleFunc("/schedule/generate", s.handleGenerateSchedule)
 	mux.HandleFunc("/ledger", s.handleGetLedger)
 	mux.HandleFunc("/inject-emergency", s.handleInjectEmergency)
+	mux.HandleFunc("/live", s.ServeWS)
 	return mux
 }

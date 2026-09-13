@@ -567,10 +567,10 @@
     if(!container || !window.L) return;
     if(leafletMap){ try{ leafletMap.remove(); }catch(e){} leafletMap=null; }
     leafletMap = L.map(container, { zoomControl:false, attributionControl:true }).setView(SHADNAGAR, 14);
-    // Use CARTO Light (OSM-based, not blocked) + Esri fallback. OSM direct tiles return 403 without app-level User-Agent.
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom:19, subdomains:'abcd',
-      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+    // HOT OSM France (no API key, not blocked) + Esri fallback. CARTO now requires API key (carto.com/basemaps/apikey).
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      maxZoom:19, subdomains:'abc',
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">HOT</a>'
     }).addTo(leafletMap);
 
     exclusionCircle = L.circle(SHADNAGAR, {

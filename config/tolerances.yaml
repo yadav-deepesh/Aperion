@@ -1,0 +1,4 @@
+# Validation tolerances for independent rain-attenuation implementations.
+# This is a rain-only numerical comparison, not the full link-budget tolerance.
+
+rain_crosscheck_absolute_db: 0.001

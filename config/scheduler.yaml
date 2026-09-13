@@ -1,0 +1,10 @@
+# Scheduler thresholds.
+# source: NTIA TM-18-531 (keyhole), operational TLE policy (24/72h)
+scheduler:
+  keyhole_cutoff_deg: 85.0
+  tle_fresh_h: 24
+  tle_warn_h: 72
+  tle_reject_h: 168
+  window_widen_sec_per_day: 30.0
+  slew_margin_sec: 1.0
+  scenario_seed: 1337

@@ -1,0 +1,20 @@
+# Second-site configuration. Same schema as site.shadnagar.yaml.
+# source: site schema v1 (values only, structure frozen)
+site:
+  name: kulasekarapattinam
+  lat: 8.37
+  lon: 78.01
+  alt_km: 0.02
+  exclusion_km: 0.0
+  min_el_sx: 5.0
+  min_el_ka: 10.0
+  uplink_margin_deg: 3.0
+  horizon:
+    n: 5.0
+    ne: 5.0
+    e: 4.0
+    se: 4.0
+    s: 4.5
+    sw: 5.0
+    w: 4.0
+    nw: 5.0

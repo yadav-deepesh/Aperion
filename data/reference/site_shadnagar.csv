@@ -1,0 +1,2 @@
+site_id,name,lat_deg,lon_deg,alt_km,source,notes
+SHADNAGAR,NRSC Shadnagar,17.037804,78.18818,0.648,NRSC SGSS spec + IN-SPACe EoI June 01 2026,Site center for GSaaS park (9.15 acres). Use as observer lat/lon/height in skyfield SGP4 pass prediction. Horizon profile per azimuth sector in config/site.shadnagar.yaml.

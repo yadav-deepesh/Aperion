@@ -1,0 +1,21 @@
+# Shadnagar GSaaS park site configuration.
+# source: IN-SPACe EoI 2026-06-01 (9.15 acres, S/X/Ka, 3 operators)
+# source: DoT Spectrum Roadmap 2026-02 (2.7 km exclusion, 24.25-27.5 GHz)
+site:
+  name: shadnagar
+  lat: 17.03
+  lon: 78.18
+  alt_km: 0.54
+  exclusion_km: 2.7
+  min_el_sx: 5.0
+  min_el_ka: 10.0
+  uplink_margin_deg: 3.0
+  horizon:
+    n: 6.0
+    ne: 5.0
+    e: 4.0
+    se: 4.0
+    s: 4.5
+    sw: 5.0
+    w: 4.0
+    nw: 5.5

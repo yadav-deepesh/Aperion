@@ -1,0 +1,32 @@
+# NRSC SGSS 7.5m antenna specification.
+# source: https://www.nrsc.gov.in/nrscnew/Services_SGSS_specification.php
+# Last verified: 2026-08-26. All rates in deg/sec, accelerations in deg/sec^2.
+antenna:
+  name: sgss-7.5m
+  reflector_m: 7.5
+  subreflector_m: 0.736
+  mount: elevation-over-azimuth
+  source: nrsc-sgss-spec
+  az:
+    vmax: 20.0
+    amax: 10.0
+  el:
+    vmax: 10.0
+    amax: 2.0
+  settle_s: 1.0
+  travel:
+    az_limit: 380.0
+    el_min: -1.0
+    el_max: 180.0
+  gain_db:
+    x: 54.5
+    s: 40.0
+  gt_dbk_at_5deg:
+    x: 31.5
+    s: 17.0
+  beamwidth_deg:
+    x: 0.27
+    s: 0.8
+  bands:
+    x: [8.025, 8.400]
+    s: [2.2, 2.3]

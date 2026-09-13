@@ -1,0 +1,72 @@
+# Aperion deploy lane (Priyanka / integration). `make dev` boots Postgres +
+# all runnable services green. Engine joins as a runtime service at the
+# proto freeze; until then see deploy/Dockerfile.engine (builds, no server yet).
+name: aperion
+
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: aperion
+      POSTGRES_PASSWORD: localdev
+      POSTGRES_DB: aperion
+    volumes:
+      # PG18 requires the mount at /var/lib/postgresql, NOT .../data.
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aperion -d aperion"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  skyfield:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.skyfield
+    ports:
+      - "50052:50052"
+
+  rain:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.rain
+    ports:
+      - "50053:50053"
+
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.orchestrator
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://aperion:localdev@db:5432/aperion?sslmode=disable
+      PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+      args:
+        # Browser-side base URL of the orchestrator. Override for stage runs:
+        # docker compose build --build-arg API_BASE=http://<host>:8080 frontend
+        API_BASE: http://localhost:8080
+    ports:
+      - "8081:80"
+    depends_on:
+      - orchestrator
+
+  # engine joins at the proto freeze (tonic gRPC :50051). Build verified via
+  #   docker build -f deploy/Dockerfile.engine .
+  # engine:
+  #   build:
+  #     context: .
+  #     dockerfile: deploy/Dockerfile.engine
+  #   ports:
+  #     - "50051:50051"
+
+volumes:
+  pgdata:

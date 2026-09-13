@@ -1,0 +1,22 @@
+# Orchestrator image: static Go binary + demo data.
+# NOTE: build context must be the REPO ROOT (this Dockerfile lives in deploy/
+# but COPY paths are relative to context). Do NOT set context to ./orchestrator
+# or the data/ and go.mod paths below will not resolve.
+FROM golang:1.26-alpine AS build
+WORKDIR /src
+COPY orchestrator/go.mod orchestrator/go.sum ./orchestrator/
+WORKDIR /src/orchestrator
+RUN go mod download
+COPY orchestrator/ ./
+RUN CGO_ENABLED=0 go build -o /out/server ./cmd/server
+
+FROM alpine:3.21
+WORKDIR /app
+COPY --from=build /out/server /app/server
+COPY data/ /app/data/
+COPY config/ /app/config/
+ENV DATA_DIR=/app
+EXPOSE 8080
+HEALTHCHECK --interval=5s --timeout=3s --retries=20 \
+  CMD wget -qO- http://localhost:8080/health | grep -q '"status":"ok"'
+ENTRYPOINT ["/app/server"]

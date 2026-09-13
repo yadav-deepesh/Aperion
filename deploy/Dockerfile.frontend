@@ -1,0 +1,14 @@
+# Dashboard image: serves the whole frontend/ tree (index.html at root,
+# js/app.js module, css/, and legacy frontend/src/). Build context: REPO ROOT.
+# API_BASE bakes window.__APERION_API__ into index.html so the browser knows
+# where the orchestrator lives. NOTE: ARG must be re-declared AFTER from —
+# an ARG before FROM is out of scope for RUN steps (bakes an empty string).
+ARG API_BASE=http://localhost:8080
+FROM nginx:alpine
+ARG API_BASE
+COPY frontend/ /usr/share/nginx/html/
+RUN sed -i "s|<script type=\"module\" src=\"js/app.js\"></script>|<script>window.__APERION_API__=\"${API_BASE}\";</script><script type=\"module\" src=\"js/app.js\"></script>|" /usr/share/nginx/html/index.html \
+ && grep -q "__APERION_API__" /usr/share/nginx/html/index.html
+EXPOSE 80
+HEALTHCHECK --interval=10s --timeout=3s --retries=12 \
+  CMD wget -qO- http://localhost:80/ | grep -q gsRoot

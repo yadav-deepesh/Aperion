@@ -1,0 +1,14 @@
+# Rust link engine: verifies the math kernel BUILDS (+ runs unit tests).
+# There is no server yet — engine/proto is empty until the proto freeze,
+# so no compose service runs this image. Build check:
+#   docker build -f deploy/Dockerfile.engine .
+# Build context: REPO ROOT.
+FROM rust:1.98-slim AS build
+WORKDIR /src
+COPY engine/Cargo.toml engine/Cargo.lock* ./
+COPY engine/src/ ./src/
+RUN cargo build --release
+
+FROM alpine:3.21
+COPY --from=build /src/target/release/engine /app/engine
+ENTRYPOINT ["/app/engine"]

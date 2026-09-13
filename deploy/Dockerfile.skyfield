@@ -1,0 +1,12 @@
+# Skyfield orbit service, offline-first (serves data/reference/pass_cache.json).
+# Build context: REPO ROOT — the service imports `services.skyfield_svc.*`
+# and reads data/ via relative paths, so WORKDIR is /app == repo root layout.
+FROM python:3.14-slim
+WORKDIR /app
+RUN pip install --no-cache-dir "fastapi>=0.115" "uvicorn>=0.30" "skyfield==1.54" "sgp4==2.26"
+COPY services/skyfield_svc/ /app/services/skyfield_svc/
+COPY data/ /app/data/
+EXPOSE 50052
+HEALTHCHECK --interval=10s --timeout=5s --retries=12 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:50052/health', timeout=4)"
+CMD ["uvicorn", "services.skyfield_svc.main:app", "--host", "0.0.0.0", "--port", "50052"]

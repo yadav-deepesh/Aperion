@@ -1,0 +1,24 @@
+# SLA tier definitions. Must match orchestrator/internal/db/seed.go.
+# source: contract seed (isro-1 Tier 1, pixxel-1 Tier 2, academic-1 Tier 3)
+contracts:
+  - id: isro-1
+    customer: ISRO/NSIL
+    tier: 1
+    min_passes_per_week: 0
+    max_preemptions_wk: 0
+    credit_per_miss: 0
+    rate_per_pass: 0
+  - id: pixxel-1
+    customer: Pixxel
+    tier: 2
+    min_passes_per_week: 21
+    max_preemptions_wk: 2
+    credit_per_miss: 20000
+    rate_per_pass: 45000
+  - id: academic-1
+    customer: Academic
+    tier: 3
+    min_passes_per_week: 0
+    max_preemptions_wk: 0
+    credit_per_miss: 0
+    rate_per_pass: 8000

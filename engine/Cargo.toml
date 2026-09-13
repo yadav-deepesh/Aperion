@@ -5,3 +5,10 @@ edition = "2024"
 
 [dependencies]
 itu-rs = { version = "=1.2.1", features = ["data"] }
+tonic = "0.12"
+prost = "0.13"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+
+[build-dependencies]
+tonic-build = "0.12"
+protoc-bin-vendored = "3"

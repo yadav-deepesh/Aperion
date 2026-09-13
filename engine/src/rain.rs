@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 pub fn rain_loss_db(
     latitude_deg: f64, // Where on Earth the ground station is, north/south
     longitude_deg: f64, // where on Earth the ground station is, east/west

@@ -84,7 +84,7 @@ pub fn select_modcod(es_n0_db: f64) -> Option<Modcod> {
         .iter()
         .copied()
         .filter(|modcod| es_n0_db >= modcod.required_es_n0_db)
-        .last()
+        .rfind(|modcod| es_n0_db >= modcod.required_es_n0_db)
 }
 
 // The above function takes input es_n0_db and iterates through the MODCOD_TABLE,

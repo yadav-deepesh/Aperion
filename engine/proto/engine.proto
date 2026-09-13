@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package engine;
+
+service LinkEngine {
+    rpc ComputeBudget (ComputeRequest) returns (ComputeResponse);
+}
+
+message ComputeRequest {
+    double distance_km = 1;
+    double latitude_deg = 2;
+    double longitude_deg = 3;
+    double frequency_ghz = 4;
+    double elevation_deg = 5;
+    double station_height_km = 6;
+    double time_percent = 7;
+    double rain_rate_r001_mmh = 8;
+    double antenna_diameter_m = 9;
+    double transmit_power_dbm = 10;
+    double tx_gain_dbi = 11;
+    double rx_gain_dbi = 12;
+    double system_temperature_k = 13;
+    double interference_to_noise_db = 14;
+    double pointing_error_deg = 15;
+    double beamwidth_3db_deg = 16;
+    double rain_polarization_deg = 17;
+    double polarization_mismatch_deg = 18;
+    double symbol_rate_sps = 19;
+    double bandwidth_hz = 20;
+}
+
+message ComputeResponse {
+    double fspl_db = 1;
+    double rain_db = 2;
+    double gas_db = 3;
+    double cloud_db = 4;
+    double scintillation_db = 5;
+    double pointing_db = 6;
+    double polarization_db = 7;
+    double total_loss_db = 8;
+    double received_power_dbm = 9;
+    double noise_density_dbm_hz = 10;
+    double cn0_db_hz = 11;
+    double effective_cn0_db_hz = 12;
+    string modcod_name = 13;
+    double spectral_efficiency = 14;
+    double data_rate_mbps = 15;
+}

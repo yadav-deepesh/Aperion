@@ -1,0 +1,64 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: 1.26.7 }
+      - name: go vet
+        working-directory: orchestrator
+        run: go vet ./...
+      - uses: actions/setup-python@v5
+        with: { python-version: 3.14.7 }
+      - name: ruff
+        run: ruff check services/ || true
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: 1.26.7 }
+      - name: go test race
+        working-directory: orchestrator
+        run: go test -race ./...
+
+  fuzz-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: 1.26.7 }
+      - name: fuzz SlewTime 30s
+        working-directory: orchestrator
+        run: go test -run=NONE -fuzz=FuzzSlewTime -fuzztime=30s ./internal/scheduler/
+      - name: fuzz AzDelta 30s
+        working-directory: orchestrator
+        run: go test -run=NONE -fuzz=FuzzAzDelta -fuzztime=30s ./internal/scheduler/
+
+  tla-model-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: TLC bounded model
+        run: java -cp tla2tools.jar tlc2.TLC -config spec/SchedulerProtocol.cfg spec/SchedulerProtocol.tla
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: compose up
+        run: docker compose -f deploy/docker-compose.yml up -d --build
+      - name: health gate
+        run: bash scripts/health_all.sh
+      - name: golden diff
+        run: bash scripts/smoke.sh

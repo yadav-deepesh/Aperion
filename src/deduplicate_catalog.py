@@ -1,6 +1,5 @@
 import pandas as pd
 
-
 INPUT_FILE = "data/raw/celestrak/resource.csv"
 OUTPUT_FILE = "data/processed/resource_deduplicated.csv"
 

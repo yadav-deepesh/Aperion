@@ -10,6 +10,7 @@ mod link_budget;
 mod received_power;
 mod cn0;
 mod modcod;
+mod interference;
 
 fn main() {
     // ----------------------FSPL----------------------
@@ -119,4 +120,13 @@ fn main() {
         }
     }
     // ------------------------------------------------------
+
+    // ----------------------interference.rs----------------------
+    let interference_to_noise_db = 0.0;
+
+    let effective_cn0 = interference::effective_cn0_db_hz(cn0, interference_to_noise_db,);
+
+    println!("5G I/N: {:.2} dB", interference_to_noise_db);
+    println!("Effective C/N0: {:.3} dB-Hz", effective_cn0);
+
 }

@@ -1,0 +1,3 @@
+site,baseline,total_passes,booked,rejected,status
+shadnagar,CP-SAT reference,1208,580,628,feasible_or_optimal
+kulasekarapattinam,CP-SAT reference,1219,594,625,feasible_or_optimal

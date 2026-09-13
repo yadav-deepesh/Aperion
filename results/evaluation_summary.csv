@@ -1,0 +1,7 @@
+site,baseline,total_passes,booked,rejected,booking_rate_pct,total_booked_duration_s,uplink_violations,violation_rate_pct,cp_sat_booked,optimality_gap_pct
+shadnagar,B0 FCFS-naive,1208,563,645,46.61,280034.65,56,9.95,580,2.93
+shadnagar,B1 Earliest-LOS,1208,580,628,48.01,255889.14,98,16.9,580,0.0
+shadnagar,B2 Weight-greedy,1208,532,676,44.04,275509.18,54,10.15,580,8.28
+kulasekarapattinam,B0 FCFS-naive,1219,575,644,47.17,280786.9,59,10.26,594,3.2
+kulasekarapattinam,B1 Earliest-LOS,1219,594,625,48.73,256993.29,100,16.84,594,0.0
+kulasekarapattinam,B2 Weight-greedy,1219,538,681,44.13,276140.94,52,9.67,594,9.43

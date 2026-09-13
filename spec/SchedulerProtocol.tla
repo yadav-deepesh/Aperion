@@ -80,7 +80,9 @@ StateBound == clock <= 8
 
 BookOrPreempt(req) ==
     \/ \E a \in Ant :
-        /\ Len(bookings[a]) = 0 \/ bookings[a][Len(bookings[a])].los + 1 <= req.aos
+        (* IF is lazy in TLC; \/ enumerates both sides and would index an empty tuple. *)
+        /\ IF Len(bookings[a]) = 0 THEN TRUE
+           ELSE bookings[a][Len(bookings[a])].los + 1 <= req.aos
         /\ bookings' = [bookings EXCEPT ![a] = Append(bookings[a], req)]
         /\ ledger' = [ledger EXCEPT ![req.contract].booked = ledger[req.contract].booked + 1,
                                    ![req.contract].pending = ledger[req.contract].pending + 1]

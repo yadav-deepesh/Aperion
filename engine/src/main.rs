@@ -9,6 +9,7 @@ mod polarization;
 mod link_budget;
 mod received_power;
 mod cn0;
+mod modcod;
 
 fn main() {
     // ----------------------FSPL----------------------
@@ -102,4 +103,20 @@ fn main() {
     println!("C/N0: {:.3} dB-Hz", cn0);
     // ------------------------------------------------
     
+    // ----------------------modcod.rs----------------------
+    let es_n0_db = 3.5; // Example value for Es/N0 in dB
+    let selected_modcod = modcod::select_modcod(es_n0_db);
+    println!("Es/N0: {:.2} dB", es_n0_db);
+    
+    match selected_modcod {
+        Some(modcod) => {
+            println!("Selected MODCOD: {}", modcod.name);
+            println!("Required Es/N0: {:.2} dB", modcod.required_es_n0_db);
+            println!("Spectral Efficiency: {:.3} bits/symbol", modcod.spectral_efficiency);
+        }
+        None => {
+            println!("No Supported MODCOD for this Es/N0");
+        }
+    }
+    // ------------------------------------------------------
 }

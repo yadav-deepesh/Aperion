@@ -1,6 +1,6 @@
+import itur
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-import itur
 
 app = FastAPI(
     title="Aperion Rain Service",

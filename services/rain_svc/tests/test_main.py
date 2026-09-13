@@ -1,5 +1,4 @@
 from fastapi.testclient import TestClient
-
 from rain_svc.main import app
 
 client = TestClient(app)

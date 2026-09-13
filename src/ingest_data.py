@@ -1,9 +1,10 @@
-import requests
 from pathlib import Path
 
-from src.validate_catalog import validate_catalog
-from src.deduplicate_catalog import main as deduplicate_catalog
+import requests
+
 from src.build_catalog import main as build_catalog
+from src.deduplicate_catalog import main as deduplicate_catalog
+from src.validate_catalog import validate_catalog
 
 CELESTRAK_URL = (
     "https://celestrak.org/NORAD/elements/gp.php" "?GROUP=resource&FORMAT=csv"
@@ -27,7 +28,7 @@ def validate_and_store(input_file, output_file):
     try:
         validate_catalog(input_file)
 
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 — gate: any validation failure rejects the catalog
         print("\nNew catalog rejected.")
         print("Validation failed:", error)
 
@@ -86,7 +87,7 @@ def download_catalog():
     try:
         deduplicate_catalog()
 
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 — gate: any dedup failure aborts the pipeline
         print("Deduplication failed:", error)
         return False
 
@@ -98,7 +99,7 @@ def download_catalog():
     try:
         build_catalog()
 
-    except Exception as error:
+    except Exception as error:  # noqa: BLE001 — gate: any catalog-build failure aborts the pipeline
         print("50-satellite catalog build failed:", error)
         return False
 

@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from src.ingest_data import validate_and_store
 
 

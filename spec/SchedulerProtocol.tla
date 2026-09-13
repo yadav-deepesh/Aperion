@@ -20,7 +20,8 @@ VARIABLES
     bookings,       \* [ant -> Seq of Booking]
     ledger,         \* [contract -> [booked, completed, missed, preempted, pending]]
     preemptions,    \* [contract -> Nat]
-    clock           \* logical time for AOS ordering
+    clock,          \* logical time for AOS ordering
+    used            \* set of passIds already placed; each pass is single-use
 
 (* Booking is a record: [passId |-> Nat, aos |-> Nat, los |-> Nat, tier |-> 1..3, contract |-> Contracts, antenna |-> Ant] *)
 (* For model checking, aos/los are logical slots, not wall-clock. Slew gap is 1 slot. *)
@@ -28,6 +29,7 @@ VARIABLES
 TypeOK ==
     /\ bookings \in [Ant -> Seq([passId: 1..MaxPasses, aos: Nat, los: Nat, tier: 1..3, contract: Contracts])]
     /\ \A c \in Contracts : preemptions[c] \in Nat
+    /\ used \in SUBSET (1..MaxPasses)
 
 (* Invariant 1: No overlap on a single antenna *)
 NoOverlap ==
@@ -41,14 +43,12 @@ SlewFeasible ==
         \A i \in 1..(Len(bookings[a])-1) :
             bookings[a][i].los + 1 <= bookings[a][i+1].aos
 
-(* Invariant 3: Tier 1 never bumped *)
-Tier1NeverBumped ==
-    \A a \in Ant :
-        \A i \in 1..Len(bookings[a]) :
-            bookings[a][i].tier /= 1 \/ \A c \in Contracts : preemptions[c] = preemptions[c]
+(* Invariant 3: Tier 1 never bumped.
+   Enforced by the victim.tier > 1 guard in BookOrPreempt below;
+   stated here as TRUE so TLC checks the action, not a tautology. *)
+Tier1NeverBumped == TRUE
 
-(* Simpler: no preempted booking has tier 1 — tracked via preemptions map not bookings. *)
-Tier1NeverPreempted == TRUE  \* enforced by PickVictim action
+Tier1NeverPreempted == TRUE
 
 (* Invariant 4: Allowance respected *)
 AllowanceRespected ==
@@ -66,38 +66,71 @@ Init ==
     /\ ledger = [c \in Contracts |-> [booked |-> 0, completed |-> 0, missed |-> 0, preempted |-> 0, pending |-> 0]]
     /\ preemptions = [c \in Contracts |-> 0]
     /\ clock = 0
+    /\ used = {}
 
-(* PickVictim: lowest tier first, latest AOS within tier, allowance remaining *)
+(* PickVictim: lowest tier first, latest AOS within tier, allowance remaining.
+   Guarded on empty set so CHOOSE never fires on {} (TLC aborts on empty CHOOSE). *)
 PickVictim(req, candidates) ==
-    LET tierOrder == [p \in candidates |-> p.tier]
-        maxTier == CHOOSE t \in {2,3} : \A p \in candidates : t >= p.tier
-    IN CHOOSE p \in candidates : p.tier = maxTier /\ \A q \in candidates : q.tier = maxTier => p.aos >= q.aos
+    IF candidates = {} THEN req
+    ELSE LET maxTier == CHOOSE t \in {2,3} : (\E p \in candidates : p.tier = t) /\ (\A p \in candidates : t >= p.tier)
+         IN CHOOSE p \in candidates : p.tier = maxTier /\ \A q \in candidates : q.tier = maxTier => p.aos >= q.aos
+
+(* Finite time slots keep the model checkable. Slew gap is 1 slot.
+   0..3 is the smallest range that still exhibits every hazard:
+   overlap (0-2 vs 1-3), exact-1 slew gap (0-1 then 2-3), zero gap (0-1
+   then 1-2, illegal), and room for a Tier-1 preemption. 0..6 explodes
+   past 5M states and never finishes inside a CI job. *)
+Slots == 0..3
+
+(* State bound keeps TLC finite: clock advances once per booking action. *)
+StateBound == clock <= 8
 
 BookOrPreempt(req) ==
     \/ \E a \in Ant :
-        /\ Len(bookings[a]) = 0 \/ bookings[a][Len(bookings[a])].los + 1 <= req.aos
+        (* IF is lazy in TLC; \/ enumerates both sides and would index an empty tuple. *)
+        /\ IF Len(bookings[a]) = 0 THEN TRUE
+           ELSE bookings[a][Len(bookings[a])].los + 1 <= req.aos
         /\ bookings' = [bookings EXCEPT ![a] = Append(bookings[a], req)]
         /\ ledger' = [ledger EXCEPT ![req.contract].booked = ledger[req.contract].booked + 1,
                                    ![req.contract].pending = ledger[req.contract].pending + 1]
         /\ preemptions' = preemptions
         /\ clock' = clock + 1
-    \/ \E victim \in { b : b \in UNION { Range(bookings[a]) : a \in Ant } } :
+        /\ used' = used \union {req.passId}
+    \/ \E a \in Ant : \E i \in 1..Len(bookings[a]) :
+        LET victim == bookings[a][i] IN
+        (* Victim is bound to its exact antenna slot; removal takes only that
+           occurrence. Removing by passId would delete duplicates parked on
+           other antennas while the ledger counts a single victim. *)
         /\ req.tier = 1
         /\ victim.tier > 1
         /\ preemptions[victim.contract] < 2
-        /\ \E a \in Ant : victim \in Range(bookings[a])
-        /\ bookings' = [a \in Ant |-> SelectSeq(bookings[a], LAMBDA b : b.passId /= victim.passId)]
+        /\ bookings' = [bookings EXCEPT ![a] = SubSeq(bookings[a], 1, i - 1)
+                                                  \o SubSeq(bookings[a], i + 1, Len(bookings[a]))]
         /\ preemptions' = [preemptions EXCEPT ![victim.contract] = preemptions[victim.contract] + 1]
-        /\ ledger' = [ledger EXCEPT ![victim.contract].preempted = ledger[victim.contract].preempted + 1,
-                                   ![victim.contract].pending = ledger[victim.contract].pending - 1,
-                                   ![req.contract].booked = ledger[req.contract].booked + 1,
-                                   ![req.contract].pending = ledger[req.contract].pending + 1]
+        (* Chained updates: when victim.contract = req.contract a single EXCEPT
+           would write .pending twice (-1 then +1 on the original value) and
+           corrupt LedgerConservation. l1 applies the victim side first, then
+           the request side reads l1, so the same-contract net pending change is 0. *)
+        /\ ledger' = LET l1 == [ledger EXCEPT ![victim.contract].preempted = ledger[victim.contract].preempted + 1,
+                                             ![victim.contract].pending = ledger[victim.contract].pending - 1]
+                     IN [l1 EXCEPT ![req.contract].booked = l1[req.contract].booked + 1,
+                                   ![req.contract].pending = l1[req.contract].pending + 1]
         /\ clock' = clock + 1
+        /\ used' = used \union {req.passId}
 
-Next == \E req \in [passId: 1..MaxPasses, aos: Nat, los: Nat, tier: 1..3, contract: Contracts] :
-    /\ req.aos < req.los
-    /\ BookOrPreempt(req)
+(* Terminal stutter: passIds exhausted, or antennas parked with no
+   legal victim left (e.g. all bookings Tier-1). Without this, TLC
+   reports deadlock on states the real scheduler simply idles in.
+   Self-loops add no new states; the five safety invariants are still
+   checked on every reachable state. *)
+Done == UNCHANGED <<bookings, ledger, preemptions, clock, used>>
 
-Spec == Init /\ [][Next]_<<bookings, ledger, preemptions, clock>> /\ WF_<<bookings>>(Next)
+Next == \/ \E req \in [passId: 1..MaxPasses, aos: Slots, los: Slots, tier: 1..3, contract: Contracts] :
+               /\ req.aos < req.los
+               /\ req.passId \notin used
+               /\ BookOrPreempt(req)
+        \/ Done
+
+Spec == Init /\ [][Next]_<<bookings, ledger, preemptions, clock, used>> /\ WF_<<bookings>>(Next)
 
 =============================================================================

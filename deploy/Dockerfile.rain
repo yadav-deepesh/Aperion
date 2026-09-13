@@ -1,0 +1,10 @@
+# Rain service (ITU-R P.618 via itur). Build context: REPO ROOT.
+FROM python:3.14-slim
+WORKDIR /app
+RUN pip install --no-cache-dir "fastapi>=0.115" "uvicorn>=0.30" "itur>=0.4.0" "pydantic>=2.0"
+COPY services/rain_svc/src/ /app/src/
+ENV PYTHONPATH=/app/src
+EXPOSE 50053
+HEALTHCHECK --interval=10s --timeout=5s --retries=12 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:50053/health', timeout=4)"
+CMD ["uvicorn", "rain_svc.main:app", "--host", "0.0.0.0", "--port", "50053"]

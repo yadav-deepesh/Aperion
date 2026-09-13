@@ -1,0 +1,12 @@
+# Keep build contexts small and hermetic. NOTE: data/ and config/ are
+# deliberately NOT ignored — skyfield and the orchestrator read them at runtime.
+.git/
+.gitignore
+engine/target/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.vscode/
+.venv/
+uv.lock

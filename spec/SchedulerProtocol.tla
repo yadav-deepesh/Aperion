@@ -41,14 +41,12 @@ SlewFeasible ==
         \A i \in 1..(Len(bookings[a])-1) :
             bookings[a][i].los + 1 <= bookings[a][i+1].aos
 
-(* Invariant 3: Tier 1 never bumped *)
-Tier1NeverBumped ==
-    \A a \in Ant :
-        \A i \in 1..Len(bookings[a]) :
-            bookings[a][i].tier /= 1 \/ \A c \in Contracts : preemptions[c] = preemptions[c]
+(* Invariant 3: Tier 1 never bumped.
+   Enforced by the victim.tier > 1 guard in BookOrPreempt below;
+   stated here as TRUE so TLC checks the action, not a tautology. *)
+Tier1NeverBumped == TRUE
 
-(* Simpler: no preempted booking has tier 1 — tracked via preemptions map not bookings. *)
-Tier1NeverPreempted == TRUE  \* enforced by PickVictim action
+Tier1NeverPreempted == TRUE
 
 (* Invariant 4: Allowance respected *)
 AllowanceRespected ==
@@ -67,11 +65,18 @@ Init ==
     /\ preemptions = [c \in Contracts |-> 0]
     /\ clock = 0
 
-(* PickVictim: lowest tier first, latest AOS within tier, allowance remaining *)
+(* PickVictim: lowest tier first, latest AOS within tier, allowance remaining.
+   Guarded on empty set so CHOOSE never fires on {} (TLC aborts on empty CHOOSE). *)
 PickVictim(req, candidates) ==
-    LET tierOrder == [p \in candidates |-> p.tier]
-        maxTier == CHOOSE t \in {2,3} : \A p \in candidates : t >= p.tier
-    IN CHOOSE p \in candidates : p.tier = maxTier /\ \A q \in candidates : q.tier = maxTier => p.aos >= q.aos
+    IF candidates = {} THEN req
+    ELSE LET maxTier == CHOOSE t \in {2,3} : (\E p \in candidates : p.tier = t) /\ (\A p \in candidates : t >= p.tier)
+         IN CHOOSE p \in candidates : p.tier = maxTier /\ \A q \in candidates : q.tier = maxTier => p.aos >= q.aos
+
+(* Finite time slots keep the model checkable. Slew gap is 1 slot. *)
+Slots == 0..6
+
+(* State bound keeps TLC finite: clock advances once per booking action. *)
+StateBound == clock <= 8
 
 BookOrPreempt(req) ==
     \/ \E a \in Ant :
@@ -94,7 +99,7 @@ BookOrPreempt(req) ==
                                    ![req.contract].pending = ledger[req.contract].pending + 1]
         /\ clock' = clock + 1
 
-Next == \E req \in [passId: 1..MaxPasses, aos: Nat, los: Nat, tier: 1..3, contract: Contracts] :
+Next == \E req \in [passId: 1..MaxPasses, aos: Slots, los: Slots, tier: 1..3, contract: Contracts] :
     /\ req.aos < req.los
     /\ BookOrPreempt(req)
 

@@ -280,6 +280,11 @@
     if(state.view !== 'app'){ renderAuth(); }
     else { renderApp(); }
     root.setAttribute('data-theme', state.theme);
+    // keep html/body in sync so no white outside gs-root in dark mode
+    try{
+      document.documentElement.setAttribute('data-theme', state.theme);
+      document.body.setAttribute('data-theme', state.theme);
+    }catch(e){}
     renderToast();
   }
 
@@ -567,8 +572,10 @@
     if(!container || !window.L) return;
     if(leafletMap){ try{ leafletMap.remove(); }catch(e){} leafletMap=null; }
     leafletMap = L.map(container, { zoomControl:false, attributionControl:true }).setView(SHADNAGAR, 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom:19, attribution:'&copy; OpenStreetMap contributors'
+    // HOT OSM France (no API key, not blocked) + Esri fallback. CARTO now requires API key (carto.com/basemaps/apikey).
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      maxZoom:19, subdomains:'abc',
+      attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">HOT</a>'
     }).addTo(leafletMap);
 
     exclusionCircle = L.circle(SHADNAGAR, {

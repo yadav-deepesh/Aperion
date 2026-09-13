@@ -86,11 +86,11 @@ BookOrPreempt(req) ==
                                    ![req.contract].pending = ledger[req.contract].pending + 1]
         /\ preemptions' = preemptions
         /\ clock' = clock + 1
-    \/ \E victim \in { b : b \in UNION { Range(bookings[a]) : a \in Ant } } :
+    \/ \E victim \in UNION { { bookings[a][i] : i \in 1..Len(bookings[a]) } : a \in Ant } :
         /\ req.tier = 1
         /\ victim.tier > 1
         /\ preemptions[victim.contract] < 2
-        /\ \E a \in Ant : victim \in Range(bookings[a])
+        /\ \E a \in Ant : \E i \in 1..Len(bookings[a]) : bookings[a][i] = victim
         /\ bookings' = [a \in Ant |-> SelectSeq(bookings[a], LAMBDA b : b.passId /= victim.passId)]
         /\ preemptions' = [preemptions EXCEPT ![victim.contract] = preemptions[victim.contract] + 1]
         /\ ledger' = [ledger EXCEPT ![victim.contract].preempted = ledger[victim.contract].preempted + 1,

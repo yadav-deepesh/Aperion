@@ -52,8 +52,17 @@ jobs:
         with: { distribution: temurin, java-version: 17 }
       - name: fetch TLC
         run: curl -sSL -o tla2tools.jar https://github.com/tlaplus/tlaplus/releases/latest/download/tla2tools.jar
+      - name: TLA syntax check
+        run: |
+          set -euo pipefail
+          java -cp tla2tools.jar tla2sany.SANY spec/SchedulerProtocol.tla
       - name: TLC bounded model
-        run: java -cp tla2tools.jar tlc2.TLC -config spec/SchedulerProtocol.cfg spec/SchedulerProtocol.tla
+        run: |
+          set -euo pipefail
+          java -cp tla2tools.jar tlc2.TLC \
+            -workers 2 \
+            -config spec/SchedulerProtocol.cfg \
+            spec/SchedulerProtocol.tla
 
   # Deploy lane reverted — compose file and health scripts return with it.
   # Job disabled (not deleted) so CI reads 4/4 green until then.

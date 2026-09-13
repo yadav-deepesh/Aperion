@@ -27,13 +27,39 @@ func main() {
 	store, err := db.New(ctx, dsn)
 	if err != nil {
 		log.Printf("db unavailable (%v) — starting without DB for health probe", err)
-		// Health + WS still available without DB
+		// Health + WS + linkbudget still available without DB (demo-friendly)
+		fallbackSrv := &api.Server{Hub: hub}
 		mux := http.NewServeMux()
 		mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(`{"status":"ok","service":"orchestrator","db":"waiting"}`))
 		})
-		mux.HandleFunc("/live", (&api.Server{Hub: hub}).ServeWS)
-		log.Fatal(http.ListenAndServe(":"+port, mux))
+		mux.HandleFunc("/live", fallbackSrv.ServeWS)
+		mux.HandleFunc("/linkbudget", fallbackSrv.HandleLinkBudget)
+		mux.HandleFunc("/api/linkbudget", fallbackSrv.HandleLinkBudget)
+		mux.HandleFunc("/compute", fallbackSrv.HandleLinkBudget)
+		// Reuse router's static serving logic by delegating to NewRouter with nil store for remaining probes
+		// But keep this minimal fallback behind CORS as well
+		handler := http.Handler(mux)
+		// apply same CORS as NewRouter does internally — here we wrap manually
+		// (api.corsMiddleware is unexported; replicate header logic inline to avoid import cycle)
+		corsWrap := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			origin := r.Header.Get("Origin")
+			if origin == "" {
+				origin = "*"
+			}
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			handler.ServeHTTP(w, r)
+		})
+		log.Printf("orchestrator (no-db) listening :%s — serving /health,/live,/linkbudget with CORS", port)
+		log.Fatal(http.ListenAndServe(":"+port, corsWrap))
 	}
 	defer store.Close()
 

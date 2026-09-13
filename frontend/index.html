@@ -1,87 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Aperion GSaaS — Shadnagar Ground Station Console" />
-  <title>Aperion — Shadnagar GSaaS Console</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ISRO GSaaS Ground Station Console">
+  <title>ISRO GSaaS — Ground Station Console</title>
   <link rel="stylesheet" href="css/style.css" />
-  <!-- Leaflet CSS is injected by map.js when needed; keep a preload for faster paint -->
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
 </head>
 <body>
-  <div id="app" class="app" data-theme="light">
-    <!-- Header -->
-    <header class="topbar">
-      <div class="brand">
-        <span class="logo">◉</span>
-        <div>
-          <div class="brand-name">Aperion · GSaaS</div>
-          <div class="brand-sub">Shadnagar 17.03°N 78.18°E · IN-SPACe park</div>
-        </div>
-      </div>
-      <div class="top-actions">
-        <span class="live-pill" title="WS /live"><span id="liveDot" class="dot offline"></span><span id="liveLabel">connecting…</span></span>
-        <span id="passCount" class="pill">—</span>
-        <button id="themeBtn" class="btn ghost" aria-label="Toggle theme">☾ Dark</button>
-      </div>
-    </header>
-
-    <!-- Layout shell: map top, Gantt middle, Ka panel + ledger sidebar -->
-    <main class="shell">
-      <!-- MAP TOP -->
-      <section class="card map-card">
-        <div class="card-head">
-          <h2>Live Tracking — Shadnagar</h2>
-          <div class="card-actions">
-            <span class="hint">Leaflet · OSM tiles · 2.7 km exclusion</span>
-          </div>
-        </div>
-        <div class="map-box" id="mapBox">
-          <div class="map-zoom">
-            <button id="zIn" aria-label="Zoom in">＋</button>
-            <button id="zOut" aria-label="Zoom out">－</button>
-          </div>
-          <div class="map-legend">
-            <div class="row"><span class="dot green"></span> T2 · T3</div>
-            <div class="row"><span class="dot red"></span> T1 · strategic</div>
-            <div class="row"><span class="dot" style="background:var(--muted-2)"></span> 5G exclusion <span id="mapLegendRadius">2.7 km</span></div>
-          </div>
-          <div id="mapCaption" class="map-caption">Live coverage · Shadnagar</div>
-        </div>
-      </section>
-
-      <!-- GANTT MIDDLE -->
-      <section class="card gantt-card">
-        <div class="card-head">
-          <h2>Antenna Allocation — Next 2 Hours</h2>
-          <div class="card-actions">
-            <button class="btn sm" id="csvBtn">Export CSV</button>
-            <button class="btn sm warn" id="emgBtn">Inject Tier-1 Emergency</button>
-            <button class="btn sm primary" id="autoBtn">Auto-Schedule</button>
-          </div>
-        </div>
-        <div id="gantt"></div>
-        <div class="disclaimer">Slew model: 20°/s az · 10°/s el · ±380° wrap · T1 red-border, T2 green, T3 dashed; gray hatched = slew gap violation. Click a bar → drawer.</div>
-      </section>
-
-      <!-- BOTTOM ROW: Ka panel + ledger sidebar -->
-      <div class="bottom-row">
-        <section class="card ka-card" id="kaPanel">
-          <!-- injected by kaPanel.js -->
-        </section>
-        <aside class="card ledger-card" id="ledger">
-          <!-- injected by ledger.js -->
-        </aside>
-      </div>
-    </main>
-
-    <footer class="foot">
-      <span>APERION · Ground Station as a Service · SIH 2026</span>
-      <span class="muted">API: <code id="apiBaseLabel">/schedule · /live · /linkbudget</code></span>
-    </footer>
-  </div>
-
+  <div class="gs-root" id="gsRoot" data-theme="light"></div>
+  <script src="src/gsaas-console-app.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

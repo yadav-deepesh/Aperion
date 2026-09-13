@@ -25,6 +25,8 @@ function qs(sel) { return document.querySelector(sel); }
 function setTheme(t) {
   state.theme = t;
   document.documentElement.setAttribute('data-theme', t);
+  try{ document.body.setAttribute('data-theme', t); }catch(e){}
+  const gs = document.getElementById('gsRoot'); if(gs) gs.setAttribute('data-theme', t);
   localStorage.setItem('aperion:theme', t);
 }
 

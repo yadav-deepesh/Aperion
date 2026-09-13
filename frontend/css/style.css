@@ -11,7 +11,9 @@
     --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
     --radius:14px;
   }
-  [data-theme="dark"]{
+  [data-theme="dark"],
+  html[data-theme="dark"],
+  body[data-theme="dark"]{
     --bg:#0c0e12; --sidebar:#111318; --card:#14161c; --border:#22252c;
     --ink:#eef1f4; --muted:#9aa2ad; --muted-2:#6b7280;
     --teal-soft:#0e2a2e;
@@ -21,8 +23,15 @@
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.25);
   }
 
+  html, body{
+    background:var(--bg);
+    color:var(--ink);
+    margin:0;
+    min-height:100vh;
+  }
+
   .gs-root{font-family:'Inter',ui-sans-serif,system-ui,sans-serif;background:var(--bg);color:var(--ink);
-    min-height:100%;box-sizing:border-box;position:relative;}
+    min-height:100vh;box-sizing:border-box;position:relative;}
   .gs-root *{box-sizing:border-box;}
   .gs-root button{font-family:inherit;}
   .gs-root input{font-family:inherit;}

@@ -280,6 +280,11 @@
     if(state.view !== 'app'){ renderAuth(); }
     else { renderApp(); }
     root.setAttribute('data-theme', state.theme);
+    // keep html/body in sync so no white outside gs-root in dark mode
+    try{
+      document.documentElement.setAttribute('data-theme', state.theme);
+      document.body.setAttribute('data-theme', state.theme);
+    }catch(e){}
     renderToast();
   }
 

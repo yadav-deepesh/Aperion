@@ -81,8 +81,10 @@ function mountLeaflet(radiusKm) {
   if (leafletMap) { try { leafletMap.remove(); } catch {} leafletMap = null; }
 
   leafletMap = L.map(container, { zoomControl: false, attributionControl: true }).setView(SHADNAGAR, 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: '&copy; OpenStreetMap contributors',
+  // Fix OSM 403 Blocked: use CARTO Light (OSM-derived, no volunteer-run blocking)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, subdomains:'abcd',
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
   }).addTo(leafletMap);
 
   exclusionCircle = L.circle(SHADNAGAR, {

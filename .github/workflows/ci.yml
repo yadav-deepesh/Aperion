@@ -67,17 +67,21 @@ jobs:
             -config SchedulerProtocol.cfg \
             SchedulerProtocol.tla
 
-  # Deploy lane reverted — compose file and health scripts return with it.
-  # Job disabled (not deleted) so CI reads 4/4 green until then.
+  # End-to-end: boots the deploy lane, gates on health, then exercises the
+  # demo-critical routes on a fresh DB. The byte-identical golden diff lands
+  # with the export lane; until then smoke.sh asserts valid response shapes.
   integration:
-    if: false
     runs-on: ubuntu-latest
     needs: [lint, test]
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: compose up
         run: docker compose -f deploy/docker-compose.yml up -d --build
       - name: health gate
         run: bash scripts/health_all.sh
-      - name: golden diff
+      - name: smoke routes
         run: bash scripts/smoke.sh
+      - name: compose down
+        if: always()
+        run: docker compose -f deploy/docker-compose.yml down -v

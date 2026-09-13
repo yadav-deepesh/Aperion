@@ -1,0 +1,7 @@
+skyfield==1.55
+fastapi==0.141.1
+uvicorn==0.52.4
+pandera==0.33.1
+pandas==2.3.3
+requests==2.32.5
+pytest==9.1.1
